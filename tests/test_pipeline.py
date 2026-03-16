@@ -63,9 +63,50 @@ def test_segmentation():
         assert "rel_area" in r
 
 
+def test_segmentation_room_count():
+    """Room count should be in a reasonable range (25-60)."""
+    if not os.path.exists(SAMPLE):
+        return
+    _, _, binary = load_and_binarize(SAMPLE)
+    wall_data = detect_walls(binary)
+    walls_closed = close_wall_gaps(wall_data["walls"])
+    rooms, _ = segment_rooms(walls_closed, binary)
+    assert 25 <= len(rooms) <= 60, f"Room count {len(rooms)} outside expected range 25-60"
+
+
+def test_no_oversized_rooms():
+    """No single room should exceed 15% of image area (over-merge indicator)."""
+    if not os.path.exists(SAMPLE):
+        return
+    _, _, binary = load_and_binarize(SAMPLE)
+    wall_data = detect_walls(binary)
+    walls_closed = close_wall_gaps(wall_data["walls"])
+    rooms, _ = segment_rooms(walls_closed, binary)
+    for r in rooms:
+        assert r["rel_area"] < 0.15, f"Room {r['label']} too large: {r['rel_area']:.4f}"
+
+
+def test_segmentation_coverage():
+    """At least 60% of building interior should be assigned to rooms."""
+    if not os.path.exists(SAMPLE):
+        return
+    _, _, binary = load_and_binarize(SAMPLE)
+    wall_data = detect_walls(binary)
+    bt, bb, bl, br = wall_data["building_bounds"]
+    walls_closed = close_wall_gaps(wall_data["walls"])
+    rooms, _ = segment_rooms(walls_closed, binary)
+    building_area = (bb - bt) * (br - bl)
+    segmented_area = sum(r["area"] for r in rooms)
+    coverage = segmented_area / max(building_area, 1)
+    assert coverage > 0.60, f"Coverage too low: {coverage:.1%}"
+
+
 if __name__ == "__main__":
     test_load_and_binarize()
     test_image_stats()
     test_wall_detection()
     test_segmentation()
+    test_segmentation_room_count()
+    test_no_oversized_rooms()
+    test_segmentation_coverage()
     print("All tests passed.")

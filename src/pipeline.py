@@ -25,7 +25,8 @@ from eraser import erase_private_areas
 from visualize import draw_classification, draw_zones
 
 
-def run_pipeline(input_path: str, output_dir: str, use_ocr: bool = False, analyze_only: bool = False):
+def run_pipeline(input_path: str, output_dir: str, use_ocr: bool = False,
+                 analyze_only: bool = False, use_ml_detect: bool = False):
     os.makedirs(output_dir, exist_ok=True)
     t0 = time.time()
 
@@ -46,10 +47,30 @@ def run_pipeline(input_path: str, output_dir: str, use_ocr: bool = False, analyz
     print(f"  Total wall px: {cv2.countNonZero(wall_data['walls'])}")
 
     # ── Phase 2B: Gap closing + segmentation ──
+    if use_ml_detect:
+        # ML detection slot (future: YOLO object detection)
+        print("\n[Phase 2B] ML detection mode (not yet implemented) ...")
+        print("  ⚠ ML detection module not available, falling back to CV pipeline")
+
     print("\n[Phase 2B] Gap closing + room segmentation ...")
-    walls_closed = close_wall_gaps(wall_data["walls"])
+    walls_closed = close_wall_gaps(wall_data["walls"], wall_data["building_bounds"])
     rooms, labels = segment_rooms(walls_closed, binary)
+
+    # Per-stage quality metrics (Phase 2B)
+    bt, bb, bl, br = bounds
+    building_area = max((bb - bt) * (br - bl), 1)
+    segmented_area = sum(r["area"] for r in rooms)
+    coverage = segmented_area / building_area
+    largest_rel_area = max((r["rel_area"] for r in rooms), default=0)
+    avg_solidity = sum(r["solidity"] for r in rooms) / max(len(rooms), 1)
+
     print(f"  Rooms detected: {len(rooms)}")
+    print(f"  Coverage: {coverage:.1%} of building interior")
+    print(f"  Largest room: {largest_rel_area:.4f} rel_area" +
+          (" (⚠ likely merged)" if largest_rel_area > 0.04 else ""))
+    print(f"  Avg solidity: {avg_solidity:.2f}")
+    if coverage < 0.60:
+        print("  ⚠ Low coverage: segmentation may be incomplete")
 
     # ── Phase 3: Classification ──
     matched_labels = []
@@ -68,7 +89,10 @@ def run_pipeline(input_path: str, output_dir: str, use_ocr: bool = False, analyz
 
     n_pub = sum(1 for r in rooms if r["type"] in PUBLIC_TYPES)
     n_priv = sum(1 for r in rooms if r["type"] not in PUBLIC_TYPES and r["type"] != "annotation")
+    n_ocr = sum(1 for r in rooms if r.get("reason", "").startswith("OCR"))
+    n_geo = sum(1 for r in rooms if r.get("reason", "").startswith("geo"))
     print(f"  Public: {n_pub}, Private: {n_priv}")
+    print(f"  Classification: {n_ocr} OCR hits, {n_geo} geometry fallback")
     for i, r in enumerate(rooms):
         p = "★" if r["type"] in PUBLIC_TYPES else " "
         zh = r.get("type_zh", r["type"])
@@ -111,8 +135,10 @@ def main():
     parser.add_argument("-o", "--output", default="output", help="Output directory")
     parser.add_argument("--ocr", action="store_true", help="Enable Tesseract OCR")
     parser.add_argument("--analyze-only", action="store_true", help="Analyze only, no output images")
+    parser.add_argument("--ml-detect", action="store_true", help="Use ML detection (future, not yet implemented)")
     args = parser.parse_args()
-    run_pipeline(args.input, args.output, use_ocr=args.ocr, analyze_only=args.analyze_only)
+    run_pipeline(args.input, args.output, use_ocr=args.ocr,
+                 analyze_only=args.analyze_only, use_ml_detect=args.ml_detect)
 
 
 if __name__ == "__main__":

@@ -171,36 +171,40 @@ def classify_rooms(
                 r["reason"] = f"OCR:'{best['text']}'"
                 continue
 
-        # --- Geometric fallback ---
+        # --- Geometric fallback (v5: position-independent) ---
         rbt, rbb = bt / img_h, bb / img_h
 
+        # Annotation: extreme aspect ratio near building margins
         if ry < rbt + 0.02 or ry > rbb - 0.02:
             if asp > 4 or asp < 0.25:
                 _set(r, "annotation"); continue
 
+        # Corridor: very elongated, inside building
         if (asp > 3.5 or asp < 0.28) and a < 0.02:
             if rbt + 0.05 < ry < rbb - 0.05:
                 _set(r, "corridor", "geo:elongated"); continue
 
-        if 0.003 < a < 0.03 and con > 0.12 and rx < 0.42 and 0.3 < asp < 3.0:
-            _set(r, "stairwell", "geo:content+pos"); continue
+        # Stairwell: high content density (tread lines) + medium size
+        if 0.003 < a < 0.03 and con > 0.12 and 0.3 < asp < 3.0:
+            _set(r, "stairwell", "geo:high_content"); continue
 
-        if a < 0.006 and 0.4 < asp < 2.5 and rx < 0.48:
-            _set(r, "elevator", "geo:small+square"); continue
+        # Elevator: very small, roughly square
+        if a < 0.006 and 0.4 < asp < 2.5:
+            _set(r, "elevator", "geo:small_square"); continue
 
-        if 0.003 < a < 0.012 and rx < 0.40 and 0.4 < ry < 0.7:
-            _set(r, "mechanical", "geo:small+left"); continue
+        # Mechanical: small, high solidity (enclosed box)
+        if 0.003 < a < 0.012 and sol > 0.7:
+            _set(r, "mechanical", "geo:small_solid"); continue
 
-        if 0.008 < a < 0.04 and 0.3 < rx < 0.55 and sol > 0.5:
-            _set(r, "lobby", "geo:medium+center"); continue
+        # Lobby: medium size, high solidity (open space)
+        if 0.008 < a < 0.04 and sol > 0.5:
+            _set(r, "lobby", "geo:medium_solid"); continue
 
-        if a < 0.015 and ry < 0.35:
-            _set(r, "balcony", "geo:top"); continue
+        # Large room → private
         if a > 0.025:
             _set(r, "private_large", "geo:large"); continue
-        if a > 0.008 and rx > 0.5:
-            _set(r, "bedroom", "geo:right+medium"); continue
 
+        # Default: private
         _set(r, "private", "geo:default")
 
     return rooms
