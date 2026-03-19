@@ -138,7 +138,7 @@ def run_evaluation(image_path: str, gt_path: str, use_ocr: bool = False):
     h, w = img.shape[:2]
     wall_data = detect_walls(binary)
     bounds = wall_data["building_bounds"]
-    walls_closed = close_wall_gaps(wall_data["walls"])
+    walls_closed = close_wall_gaps(wall_data["walls"], wall_data["building_bounds"])
     rooms, labels = segment_rooms(walls_closed, binary)
 
     matched_labels = []

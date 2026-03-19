@@ -1,7 +1,7 @@
 # 建築平面圖公共區域辨識系統 — Project Knowledge Base
 
-> 最後更新：2026-03-16
-> 狀態：POC Phase 2 開發中（v3 完成，v4 OCR 整合待執行）
+> 最後更新：2026-03-19
+> 狀態：POC Phase 2 v5 完成，評估基礎設施就緒
 
 ---
 
@@ -49,8 +49,11 @@ Phase 2: 結構理解（核心難點）
   2B. 牆體分類：厚牆（結構牆，≥3px）vs 薄牆（隔間牆）
   2C. 建築邊界偵測：從厚牆座標的 P2/P98 推估 building footprint
   2D. 薄牆過濾：只保留 building footprint 內的薄牆（排除尺寸標註線）
-  2E. 間隙封閉：dilate(5x5) → directional close(25x1, 1x25) → close(7x7)
+  2E. 間隙封閉 (v5)：dilate(5x5) → close(7x7) → endpoint-targeted bridging(90px) → open(3x3)
+      + _connect_walls_to_boundary() 修復邊緣房間漏失
+      + _bridge_gaps_at_endpoints() 使用 morphological skeleton + hit-or-miss 端點偵測
   2F. 空間分割：invert walls → flood fill exterior → connected components
+      + over-merge 偵測 (rel_area>4% & solidity<65%) → projection profile 拆分
 
 Phase 3: 空間分類
   3A. OCR 文字辨識：Tesseract (chi_tra+eng, psm=11) 掃描全圖
@@ -90,34 +93,47 @@ Phase 5: 輸出渲染
 - Otsu 二值化可正確處理住宅大樓平面圖
 - 圖面品質分析（白比96%、黑比4%、高對比度）
 
-#### Phase 2: 牆體偵測 + 空間分割 ✅ (v3)
+#### Phase 2: 牆體偵測 + 空間分割 ✅ (v5)
 - **v1**: 基礎 Connected Components，偵測到 21 個空間，但尺寸線干擾嚴重
 - **v2**: 嘗試先過濾再偵測，但過濾太激進把牆也移掉了（0 rooms）
-- **v3 (當前最佳)**: 改為從原始 binary 直接提取牆體，再用 building footprint 過濾薄牆
-  - 偵測到 36 個空間
-  - 16 個公共 / 20 個私有
-  - 空間分割完整度 ~70%
-  - 分類準確度 ~55%（純幾何規則，無 OCR）
+- **v3**: 從原始 binary 直接提取牆體，用 building footprint 過濾薄牆，36 rooms, coverage ~40.8%
+- **v5 (當前)**: Endpoint-targeted gap bridging + boundary wall connection + over-merge split
+  - 35 rooms, coverage 64.3% (+23.4pp vs v3)
+  - Mean IoU 0.917 vs GT (matched rooms)
+  - 48 張多樣本泛化測試，0 crash
 
-#### Phase 3: OCR 整合 🔄 (v4 code ready, not yet executed)
-- Tesseract 已安裝 (chi_tra + eng)
-- v4 script 已完成，包含完整 OCR + 分類 pipeline
-- **尚未執行**（上一輪 session 修完 numpy 相容性後到達 tool-use 上限）
+#### Phase 3: OCR + 分類 ✅ (v5)
+- Tesseract 已整合 (chi_tra + eng, PSM=11)
+- OCR 優先 + 幾何 fallback 分類
+- v5 移除 rx/ry 位置規則，改用內在特徵（content_ratio, aspect_ratio, area, solidity）
+- **注意**: sample1 上 OCR 返回 0 text blocks，需調查
+
+#### Phase 4: 擦除 ✅ (v5)
+- 私有空間填白 + 結構牆重繪
+- CJK 文字渲染「非申報範圍」（Pillow + 系統字型）
+- 公共空間周邊動態 margin 復原
+
+#### 評估基礎設施 ✅ (v5)
+- `src/evaluate.py`: 自動比對 pipeline 輸出 vs ground truth
+- `samples/sample1/ground_truth.json`: 手動標註 17 rooms (7 public, 10 private)
+- `docs/baselines.md`: 完整評估指標記錄
+- `tests/test_pipeline.py`: 7 項測試全部通過
 
 ### 3.2 待完成
-- [ ] 執行 v4 OCR pipeline 並評估結果
-- [ ] 調整 OCR 參數（PSM mode、conf threshold）
+- [ ] OCR 調查：為何 Tesseract 在 sample1 上 0 hits
+- [ ] 核心區域分割改善：樓梯間/電梯/梯廳需被正確分割
+- [ ] Over-merge 修復：底部大區域需拆分
 - [ ] FR1 防火區劃標註辨識與保留
-- [ ] 擦除品質優化（邊界精確度、殘留元素清理）
-- [ ] 多樣本泛化測試
 - [ ] Phase 5 輸出渲染模組
+- [ ] 更多 ground truth 標註（sample2+）
 
 ### 3.3 已知問題
-1. **餐廳/廚房誤判為梯廳**：幾何特徵相似，需 OCR 修正
-2. **頂部尺寸標註區被誤判為走廊**：極長窄形狀觸發走廊規則
-3. **右側邊界出現碎片空間**：牆體與邊界線之間的縫隙
-4. **門口間隙封閉不完整**：部分房間仍合併
-5. **擦除區域有殘留元素**：空間遮罩邊界偏差
+1. **核心區域未分割**: 樓梯間/電梯/梯廳在中央核心區未被正確分割為獨立房間
+2. **Over-merge**: 底部區域合併為單一巨大房間 (rel_area=0.12)
+3. **OCR 失效**: Tesseract 在 sample1 上返回 0 text blocks
+4. **分類不準**: 幾何規則把臥室/浴室/陽台誤判為電梯/機電
+5. **低解析度圖效果差**: taipei_social_housing (2339×1654) 平均 coverage 僅 17.5%
+6. **高解析度圖處理慢**: hospital_gov (7000-8000px) 需 30-120 秒
 
 ---
 
@@ -173,20 +189,20 @@ PRIVATE_KEYWORDS = {
 
 ---
 
-## 6. 幾何分類規則（OCR fallback）
+## 6. 幾何分類規則（v5, OCR fallback）
 
-當 OCR 無法辨識房間標註時，使用以下規則：
+v5 已移除所有 rx/ry 位置規則，改用內在特徵：
 
-| 類型 | 相對面積 | 長寬比 | 位置 | 其他 |
-|------|---------|--------|------|------|
-| 走廊 | < 0.02 | > 3.5 或 < 0.28 | 建築內部 | — |
-| 樓梯間 | 0.003~0.03 | 0.3~3.0 | rx < 0.42 | content > 0.12 |
-| 電梯 | < 0.006 | 0.4~2.5 | rx < 0.48 | — |
-| 機電空間 | 0.003~0.012 | — | rx < 0.40, ry 0.4~0.7 | — |
-| 梯廳 | 0.008~0.04 | — | rx 0.3~0.55 | solidity > 0.5 |
-| 陽台 | < 0.015 | — | ry < 0.35 | — |
-
-注意：這些位置規則是基於 sample1 的左公共右私有佈局，泛化性有限。
+| 類型 | 相對面積 | 長寬比 | 其他特徵 |
+|------|---------|--------|---------|
+| annotation | — | >4 或 <0.25 | rel_y 在建築邊緣 |
+| corridor | < 2% | >3.5 或 <0.28 | 建築內部 (5%-95% height) |
+| stairwell | 0.3%~3% | 0.3~3.0 | content_ratio > 12% |
+| elevator | < 0.6% | 0.4~2.5 | — |
+| mechanical | 0.3%~1.2% | — | solidity > 70% |
+| lobby | 0.8%~4% | — | solidity > 50% |
+| private_large | > 2.5% | — | — |
+| private | default | — | — |
 
 ---
 
@@ -202,9 +218,11 @@ PRIVATE_KEYWORDS = {
 - 策略：用 building footprint（厚牆的 P2/P98 座標）作為分界
 
 ### 7.3 空間分割的關鍵挑戰
-- 門口間隙導致相鄰房間合併 → 需要 directional morphological closing
+- 門口間隙導致相鄰房間合併 → 需要定向 morphological closing
 - 過度 closing 會合併走廊兩側的房間 → closing kernel 不能太大
-- 最佳參數組合：dilate(5x5,1次) → close(25x1) → close(1x25) → close(7x7)
+- **v5 策略**: endpoint-targeted bridging — 用 morphological skeleton 找牆端點，只在端點附近 90px 內做 closing
+- **v3 legacy**: dilate(5x5) → close(25x1) → close(1x25) → close(7x7)，coverage 僅 40.8%
+- **v5 結果**: coverage 64.3%（+23.4pp），但 over-merge 增加（largest room 0.12 vs 0.04）
 
 ### 7.4 圖面元素層次
 ```
@@ -221,50 +239,55 @@ Layer 7 (邊界): 地界線、建築線（虛線）
 
 ## 8. POC 成功指標
 
-| 指標 | 目標 | 當前 (v3) | 預估 (v4+OCR) |
-|------|------|-----------|---------------|
-| 公共區域偵測率 | ≥ 80% | ~65% | ~80% |
-| 分類準確率 | ≥ 75% | ~55% | ~80% |
-| 空間分割完整度 | ≥ 85% | ~70% | ~70% |
-| 單張處理時間 | < 60s | ~5s | ~10s |
+| 指標 | 目標 | v3 | v5 (geometry) | v5 (with OCR) |
+|------|------|-----|---------------|---------------|
+| Detection rate | ≥ 80% | ~47% | 41.2% | 41.2% (OCR 0 hits) |
+| Mean IoU | ≥ 0.70 | 0.716 | **0.917** | 0.917 |
+| Type accuracy | ≥ 75% | 0% | 14.3% | 14.3% |
+| Coverage | ≥ 85% | 40.8% | **64.3%** | 64.3% |
+| 單張處理時間 | < 60s | ~5s | ~8s | ~8s |
+| 穩定性 (48 samples) | 0 crash | — | **0 crash** | — |
 
 ---
 
 ## 9. 檔案索引
 
-### 9.1 程式碼（/home/claude/）
+### 9.1 程式碼 (src/)
 | 檔案 | 說明 | 狀態 |
 |------|------|------|
-| `analyze_samples.py` | Phase 1 樣本分析（histogram, LSD, MSER） | ✅ 完成 |
-| `phase2_prototype.py` | Phase 2 v1（基礎 CC 分割） | ✅ 已棄用 |
-| `phase2v3_prototype.py` | Phase 2 v3（牆體優先提取，當前最佳） | ✅ 完成 |
-| `phase2v4_ocr.py` | Phase 2 v4（OCR 增強分類，完整版） | 🔄 待執行 |
-| `poc_plan.js` | POC 計畫 Word 文件生成器 | ✅ 完成 |
+| `pipeline.py` | CLI 入口，五階段管線控制器 | ✅ v5 |
+| `preprocessing.py` | Phase 1: 影像載入、Otsu 二值化 | ✅ |
+| `wall_detection.py` | Phase 2A: 牆體偵測、gap closing、building bounds | ✅ v5 |
+| `segmentation.py` | Phase 2B: Flood-fill 空間分割、over-merge split | ✅ v5 |
+| `ocr_classify.py` | Phase 3: OCR + 幾何分類 | ✅ v5 |
+| `eraser.py` | Phase 4: 選擇性擦除、CJK 文字渲染 | ✅ v5 |
+| `visualize.py` | 視覺化輔助（classification, zones overlay） | ✅ |
+| `evaluate.py` | Ground truth 評估腳本 | ✅ v5 |
 
-### 9.2 輸出文件（/mnt/user-data/outputs/）
+### 9.2 測試與文件
 | 檔案 | 說明 |
 |------|------|
-| `POC_技術驗證計畫_v1.docx` | POC 計畫文件（需更新為擦除模式架構） |
-| `v3_01_room_classification.png` | v3 空間分類結果 |
-| `v3_02_public_private_zones.png` | v3 公私區域分區圖 |
-| `v3_03_simulated_erasure.png` | v3 模擬擦除輸出 |
+| `tests/test_pipeline.py` | 7 項 smoke tests (all pass) |
+| `samples/sample1/ground_truth.json` | 手動標註 GT (17 rooms) |
+| `docs/baselines.md` | 評估基準記錄（v5 vs legacy, 多樣本測試） |
+| `docs/PROJECT_KNOWLEDGE_BASE.md` | 完整技術知識庫 |
+| `docs/QUICK_RESUME.md` | 快速上手參考 |
 
 ---
 
 ## 10. 下一步行動項
 
 ### 立即（本週）
-1. **執行 v4 OCR pipeline**：`python /home/claude/phase2v4_ocr.py`
-   - 環境已就緒：Tesseract 5.3 + chi_tra + numpy/cv2 相容
-2. 評估 OCR 對分類準確度的提升
-3. 調整 OCR 參數如果初始結果不理想
+1. **調查 OCR 失效原因**: Tesseract 在 sample1 上 0 text blocks，需檢查 PSM 設定、圖面品質、解析度
+2. **改善核心區域分割**: 樓梯間/電梯/梯廳需被正確分割為獨立房間
+3. **處理 over-merge**: 改進 projection profile split logic
 
 ### 短期（1-2 週）
-4. FR1 防火區劃辨識模組
-5. 擦除品質優化（邊界精確度）
-6. 第二張樣本 (1000009204.webp) 的反向驗證
+4. 為更多樣本建立 ground truth（sample2+）
+5. FR1 防火區劃辨識模組
+6. Phase 5 輸出渲染（PDF 生成）
 
 ### 中期（3-4 週）
-7. 更多樣本泛化測試
+7. 低解析度圖面優化（resizing 策略）
 8. Web 介面原型
-9. 更新 POC 計畫文件
+9. ML 路線評估（如累積 30+ 張標註圖面）

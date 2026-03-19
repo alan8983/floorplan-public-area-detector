@@ -1,0 +1,19 @@
+[
+  {"bbox": [905, 1195, 195, 250], "type": "stairwell", "is_public": true, "note": "main stairwell, T15 treads, 89-12-89 double flight"},
+  {"bbox": [2560, 1650, 180, 200], "type": "stairwell", "is_public": true, "note": "fire escape near glass brick fire-rated wall (estimated)"},
+  {"bbox": [905, 1460, 250, 220], "type": "lobby", "is_public": true, "note": "梯廳 below stairwell, 235x215, fire doors D1/D2"},
+  {"bbox": [2240, 1690, 300, 165], "type": "lobby", "is_public": true, "note": "corridor-to-bedroom transition lobby (estimated)"},
+  {"bbox": [905, 1730, 230, 240], "type": "elevator", "is_public": true, "note": "10人份行動不便電梯, X cross symbol"},
+  {"bbox": [1562, 1691, 674, 161], "type": "corridor", "is_public": true, "note": "main corridor connecting core to bedrooms"},
+  {"bbox": [1180, 1700, 180, 420], "type": "mechanical", "is_public": true, "note": "機電空間, height 421.5"},
+  {"bbox": [950, 750, 500, 400], "type": "kitchen", "is_public": false, "note": "餐廳/廚房"},
+  {"bbox": [1370, 1460, 380, 350], "type": "living_room", "is_public": false, "note": "客廳 (A), GL+0.85=1.25"},
+  {"bbox": [2000, 1100, 370, 380], "type": "bedroom", "is_public": false, "note": "臥室 upper right"},
+  {"bbox": [1758, 1843, 283, 429], "type": "bedroom", "is_public": false, "note": "臥室 lower center"},
+  {"bbox": [2061, 1905, 422, 495], "type": "bedroom", "is_public": false, "note": "主臥室 master bedroom"},
+  {"bbox": [1990, 1395, 135, 250], "type": "bathroom", "is_public": false, "note": "bathroom near bedrooms with D8"},
+  {"bbox": [2350, 1520, 180, 250], "type": "bathroom", "is_public": false, "note": "bathroom between bedrooms"},
+  {"bbox": [1160, 1460, 120, 150], "type": "storage", "is_public": false, "note": "儲藏 near lobby with D1"},
+  {"bbox": [1251, 550, 372, 181], "type": "balcony", "is_public": false, "note": "陽台 upper center"},
+  {"bbox": [2131, 550, 364, 182], "type": "balcony", "is_public": false, "note": "雨遮 upper right"}
+]

@@ -51,7 +51,7 @@ def test_segmentation():
         return
     _, _, binary = load_and_binarize(SAMPLE)
     wall_data = detect_walls(binary)
-    walls_closed = close_wall_gaps(wall_data["walls"])
+    walls_closed = close_wall_gaps(wall_data["walls"], wall_data["building_bounds"])
     rooms, labels = segment_rooms(walls_closed, binary)
     assert len(rooms) > 0
     assert labels.shape == binary.shape
@@ -69,7 +69,7 @@ def test_segmentation_room_count():
         return
     _, _, binary = load_and_binarize(SAMPLE)
     wall_data = detect_walls(binary)
-    walls_closed = close_wall_gaps(wall_data["walls"])
+    walls_closed = close_wall_gaps(wall_data["walls"], wall_data["building_bounds"])
     rooms, _ = segment_rooms(walls_closed, binary)
     assert 25 <= len(rooms) <= 60, f"Room count {len(rooms)} outside expected range 25-60"
 
@@ -80,7 +80,7 @@ def test_no_oversized_rooms():
         return
     _, _, binary = load_and_binarize(SAMPLE)
     wall_data = detect_walls(binary)
-    walls_closed = close_wall_gaps(wall_data["walls"])
+    walls_closed = close_wall_gaps(wall_data["walls"], wall_data["building_bounds"])
     rooms, _ = segment_rooms(walls_closed, binary)
     for r in rooms:
         assert r["rel_area"] < 0.15, f"Room {r['label']} too large: {r['rel_area']:.4f}"
@@ -93,7 +93,7 @@ def test_segmentation_coverage():
     _, _, binary = load_and_binarize(SAMPLE)
     wall_data = detect_walls(binary)
     bt, bb, bl, br = wall_data["building_bounds"]
-    walls_closed = close_wall_gaps(wall_data["walls"])
+    walls_closed = close_wall_gaps(wall_data["walls"], wall_data["building_bounds"])
     rooms, _ = segment_rooms(walls_closed, binary)
     building_area = (bb - bt) * (br - bl)
     segmented_area = sum(r["area"] for r in rooms)
