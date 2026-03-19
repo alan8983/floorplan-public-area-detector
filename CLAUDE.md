@@ -33,11 +33,25 @@ sudo apt-get install tesseract-ocr tesseract-ocr-chi-tra tesseract-ocr-chi-sim
 # 完整管線
 python -m src.pipeline samples/sample_input.jpg -o output/
 
+# Web UI（含辨識 + 標註編輯 + 評估儀表板）
+streamlit run app.py
+
 # 單步測試
 python -m src.walls samples/sample_input.jpg -o output/
 python -m src.ocr samples/sample_input.jpg
 python -m pytest tests/ -v
 ```
+
+## Web UI 功能
+Streamlit 介面 (`app.py`)，`streamlit run app.py` 啟動後瀏覽 http://localhost:8501
+- **辨識結果 Tab**: 上傳/選擇圖片 → 執行 pipeline → 查看分類/分區/擦除結果
+- **標註編輯 Tab**: 完整 Ground Truth 編輯器（獨立於 pipeline）
+  - 在平面圖上拖曳畫新 bbox、調整邊界、刪除
+  - 支援 6 種分類：stairwell / elevator / corridor / lobby / mechanical / private
+  - 三種初始來源：空白標註 / 從 Pipeline 載入 / 載入既存 GT
+  - 儲存為 `ground_truth.json`
+- **評估 Tab**: Pipeline 預測 vs Ground Truth 比對（準確度、IoU、逐房間比較表）
+- 依賴: `streamlit-image-annotation` (bbox 繪製與標註元件)
 
 ## 當前進度
 - Phase 1 (前處理): ✅

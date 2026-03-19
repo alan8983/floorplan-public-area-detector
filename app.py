@@ -10,6 +10,8 @@ import streamlit as st
 import pandas as pd
 
 from src.pipeline_ui import run_pipeline_ui
+from src.annotation_tab import render_annotation_tab
+from src.evaluation_tab import render_evaluation_tab
 
 # ── 公共類型（用於表格標記） ──
 PUBLIC_TYPES = {"stairwell", "elevator", "corridor", "lobby", "mechanical"}
@@ -123,7 +125,7 @@ with st.sidebar:
     st.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)
 
     # ── 執行 ──
-    run_clicked = st.button("▶ 開始辨識", type="primary", width="stretch")
+    run_clicked = st.button("▶ 開始辨識", type="primary", use_container_width=True)
 
     # ── 指標區（pipeline 執行後填入） ──
     metrics_placeholder = st.empty()
@@ -133,11 +135,6 @@ with st.sidebar:
 # Main Area
 # ─────────────────────────────────────────────
 st.title("建築平面圖公共區域辨識")
-
-# 初始狀態：顯示選擇的圖片預覽
-if image_path and not run_clicked and "result" not in st.session_state:
-    st.image(image_path, caption="選擇的平面圖", width="stretch")
-    st.info("👈 點擊左側「開始辨識」執行 pipeline")
 
 # ── 執行 Pipeline ──
 if run_clicked:
@@ -149,18 +146,29 @@ if run_clicked:
         st.session_state["result"] = result
         st.session_state["image_path"] = image_path
 
-# ── 顯示結果 ──
-if "result" in st.session_state:
-    result = st.session_state["result"]
+# ── 取得當前 pipeline result（可能為 None） ──
+pipeline_result = st.session_state.get("result", None)
+current_image = image_path  # 用於標註 Tab（不需要 pipeline）
 
-    # 錯誤處理
-    if result["error"]:
-        st.error(f"❌ Pipeline 執行失敗")
-        st.code(result["error"], language="text")
+# ── Tabs: 永遠顯示，不需要先跑 pipeline ──
+tab_pipeline, tab_annotate, tab_eval = st.tabs(
+    ["🔬 辨識結果", "✏️ 標註編輯", "📊 評估"]
+)
+
+with tab_pipeline:
+    if pipeline_result is None:
+        if image_path:
+            st.image(image_path, caption="選擇的平面圖", use_container_width=True)
+            st.info("👈 點擊左側「開始辨識」執行 pipeline")
+        else:
+            st.info("👈 請先上傳圖檔或選擇範例")
+    elif pipeline_result.get("error"):
+        st.error("❌ Pipeline 執行失敗")
+        st.code(pipeline_result["error"], language="text")
     else:
-        images = result["images"]
-        rooms = result["rooms"]
-        metrics = result["metrics"]
+        images = pipeline_result["images"]
+        rooms = pipeline_result["rooms"]
+        metrics = pipeline_result["metrics"]
 
         # ── Sidebar: 品質指標 ──
         with metrics_placeholder.container():
@@ -181,29 +189,29 @@ if "result" in st.session_state:
             if metrics["coverage"] < 0.60:
                 st.warning("⚠️ 覆蓋率偏低，分割可能不完整")
 
-        # ── Tabs: 各階段輸出 ──
-        tab_original, tab_class, tab_zones, tab_erased, tab_debug = st.tabs(
+        # ── Pipeline 子 tabs ──
+        sub_original, sub_class, sub_zones, sub_erased, sub_debug = st.tabs(
             ["🖼️ 原圖", "🏷️ 分類", "🟢 公私區", "✂️ 擦除", "🔧 Debug"]
         )
 
-        with tab_original:
-            st.image(images["original"], caption="原始平面圖", width="stretch")
+        with sub_original:
+            st.image(images["original"], caption="原始平面圖", use_container_width=True)
 
-        with tab_class:
-            st.image(images["classification"], caption="空間分類結果", width="stretch")
+        with sub_class:
+            st.image(images["classification"], caption="空間分類結果", use_container_width=True)
 
-        with tab_zones:
-            st.image(images["zones"], caption="公共區域 (綠) vs 私有區域 (粉)", width="stretch")
+        with sub_zones:
+            st.image(images["zones"], caption="公共區域 (綠) vs 私有區域 (粉)", use_container_width=True)
 
-        with tab_erased:
-            st.image(images["erased"], caption="擦除結果 — 僅保留公共區域", width="stretch")
+        with sub_erased:
+            st.image(images["erased"], caption="擦除結果 — 僅保留公共區域", use_container_width=True)
 
-        with tab_debug:
+        with sub_debug:
             debug_col1, debug_col2 = st.columns(2)
             with debug_col1:
-                st.image(images["walls_thick"], caption="厚牆偵測", width="stretch")
+                st.image(images["walls_thick"], caption="厚牆偵測", use_container_width=True)
             with debug_col2:
-                st.image(images["walls_closed"], caption="間隙封閉後牆體", width="stretch")
+                st.image(images["walls_closed"], caption="間隙封閉後牆體", use_container_width=True)
 
         # ── Room 分類表格 ──
         st.subheader("📋 空間分類明細")
@@ -224,7 +232,6 @@ if "result" in st.session_state:
 
             df = pd.DataFrame(table_data)
 
-            # 以顏色標記公共區域列
             def highlight_public(row):
                 if row["公共"] == "★":
                     return ["background-color: #e8f5e9"] * len(row)
@@ -233,6 +240,12 @@ if "result" in st.session_state:
             styled = df.style.apply(highlight_public, axis=1).set_properties(
                 **{"text-align": "center"}, subset=["#", "公共", "面積比", "長寬比"]
             )
-            st.dataframe(styled, width="stretch", hide_index=True)
+            st.dataframe(styled, use_container_width=True, hide_index=True)
         else:
             st.info("未偵測到任何空間")
+
+with tab_annotate:
+    render_annotation_tab(pipeline_result, current_image)
+
+with tab_eval:
+    render_evaluation_tab(pipeline_result, current_image)

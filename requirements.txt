@@ -4,3 +4,4 @@ Pillow>=10.0
 pytesseract>=0.3.10
 streamlit>=1.30
 pandas>=2.0
+streamlit-image-annotation>=0.8.0
