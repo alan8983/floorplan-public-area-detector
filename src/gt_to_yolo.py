@@ -37,6 +37,9 @@ import shutil
 import sys
 from pathlib import Path
 
+sys.path.insert(0, os.path.dirname(__file__))
+from overlap import resolve_overlaps, print_overlap_report
+
 # ── 類別定義 ──
 CLASS_MAP = {
     "stairwell": 0,
@@ -90,6 +93,12 @@ def convert_single(json_path: str, images_dir: str, labels_dir: str,
     img_w, img_h = data["image_size"]
     stem = Path(image_name).stem
     annotations = data.get("annotations", [])
+
+    # 重疊解衝突（公區優先）
+    result = resolve_overlaps(annotations, img_w=img_w, img_h=img_h)
+    annotations = result["resolved"]
+    if result["stats"]["dropped_count"] > 0:
+        print_overlap_report(result)
 
     # 寫 YOLO .txt
     label_path = os.path.join(labels_dir, f"{stem}.txt")

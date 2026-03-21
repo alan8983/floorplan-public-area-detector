@@ -1,0 +1,515 @@
+{
+  "image": "tku_biz_1F.jpg",
+  "created": "2026-03-21T08:37:14.176Z",
+  "num_rooms": 46,
+  "num_public": 20,
+  "num_private": 26,
+  "annotations": [
+    {
+      "bbox": [
+        1080,
+        708,
+        313,
+        119
+      ],
+      "type": "stairwell",
+      "is_public": true,
+      "note": ""
+    },
+    {
+      "bbox": [
+        803,
+        857,
+        165,
+        67
+      ],
+      "type": "stairwell",
+      "is_public": true,
+      "note": ""
+    },
+    {
+      "bbox": [
+        447,
+        1466,
+        105,
+        218
+      ],
+      "type": "elevator",
+      "is_public": true,
+      "note": ""
+    },
+    {
+      "bbox": [
+        696,
+        1398,
+        123,
+        72
+      ],
+      "type": "private",
+      "is_public": false,
+      "note": ""
+    },
+    {
+      "bbox": [
+        552,
+        1096,
+        409,
+        199
+      ],
+      "type": "private",
+      "is_public": false,
+      "note": ""
+    },
+    {
+      "bbox": [
+        1086,
+        835,
+        294,
+        273
+      ],
+      "type": "private",
+      "is_public": false,
+      "note": ""
+    },
+    {
+      "bbox": [
+        1085,
+        1119,
+        867,
+        372
+      ],
+      "type": "private",
+      "is_public": false,
+      "note": ""
+    },
+    {
+      "bbox": [
+        1962,
+        1120,
+        282,
+        376
+      ],
+      "type": "private",
+      "is_public": false,
+      "note": ""
+    },
+    {
+      "bbox": [
+        2437,
+        1111,
+        615,
+        362
+      ],
+      "type": "private",
+      "is_public": false,
+      "note": ""
+    },
+    {
+      "bbox": [
+        556,
+        616,
+        191,
+        236
+      ],
+      "type": "private",
+      "is_public": false,
+      "note": ""
+    },
+    {
+      "bbox": [
+        801,
+        238,
+        1710,
+        375
+      ],
+      "type": "private",
+      "is_public": false,
+      "note": ""
+    },
+    {
+      "bbox": [
+        2513,
+        238,
+        292,
+        296
+      ],
+      "type": "private",
+      "is_public": false,
+      "note": ""
+    },
+    {
+      "bbox": [
+        564,
+        1392,
+        124,
+        84
+      ],
+      "type": "private",
+      "is_public": false,
+      "note": ""
+    },
+    {
+      "bbox": [
+        554,
+        1953,
+        129,
+        120
+      ],
+      "type": "private",
+      "is_public": false,
+      "note": ""
+    },
+    {
+      "bbox": [
+        684,
+        1668,
+        114,
+        403
+      ],
+      "type": "private",
+      "is_public": false,
+      "note": ""
+    },
+    {
+      "bbox": [
+        936,
+        1669,
+        159,
+        187
+      ],
+      "type": "private",
+      "is_public": false,
+      "note": ""
+    },
+    {
+      "bbox": [
+        800,
+        1915,
+        377,
+        127
+      ],
+      "type": "private",
+      "is_public": false,
+      "note": ""
+    },
+    {
+      "bbox": [
+        1185,
+        1858,
+        335,
+        185
+      ],
+      "type": "private",
+      "is_public": false,
+      "note": ""
+    },
+    {
+      "bbox": [
+        804,
+        1669,
+        132,
+        245
+      ],
+      "type": "private",
+      "is_public": false,
+      "note": ""
+    },
+    {
+      "bbox": [
+        937,
+        1863,
+        244,
+        45
+      ],
+      "type": "private",
+      "is_public": false,
+      "note": ""
+    },
+    {
+      "bbox": [
+        1520,
+        1592,
+        440,
+        448
+      ],
+      "type": "private",
+      "is_public": false,
+      "note": ""
+    },
+    {
+      "bbox": [
+        2513,
+        1476,
+        294,
+        342
+      ],
+      "type": "private",
+      "is_public": false,
+      "note": ""
+    },
+    {
+      "bbox": [
+        2810,
+        1474,
+        82,
+        189
+      ],
+      "type": "private",
+      "is_public": false,
+      "note": ""
+    },
+    {
+      "bbox": [
+        2974,
+        1476,
+        73,
+        141
+      ],
+      "type": "private",
+      "is_public": false,
+      "note": ""
+    },
+    {
+      "bbox": [
+        2926,
+        1670,
+        130,
+        274
+      ],
+      "type": "stairwell",
+      "is_public": true,
+      "note": ""
+    },
+    {
+      "bbox": [
+        2895,
+        1476,
+        78,
+        187
+      ],
+      "type": "corridor",
+      "is_public": true,
+      "note": ""
+    },
+    {
+      "bbox": [
+        2975,
+        1623,
+        40,
+        45
+      ],
+      "type": "corridor",
+      "is_public": true,
+      "note": ""
+    },
+    {
+      "bbox": [
+        2921,
+        1950,
+        127,
+        124
+      ],
+      "type": "private",
+      "is_public": false,
+      "note": ""
+    },
+    {
+      "bbox": [
+        2808,
+        1676,
+        118,
+        388
+      ],
+      "type": "private",
+      "is_public": false,
+      "note": ""
+    },
+    {
+      "bbox": [
+        2512,
+        1817,
+        296,
+        223
+      ],
+      "type": "private",
+      "is_public": false,
+      "note": ""
+    },
+    {
+      "bbox": [
+        1957,
+        1592,
+        555,
+        450
+      ],
+      "type": "private",
+      "is_public": false,
+      "note": ""
+    },
+    {
+      "bbox": [
+        559,
+        1666,
+        124,
+        278
+      ],
+      "type": "stairwell",
+      "is_public": true,
+      "note": ""
+    },
+    {
+      "bbox": [
+        752,
+        618,
+        327,
+        232
+      ],
+      "type": "corridor",
+      "is_public": true,
+      "note": ""
+    },
+    {
+      "bbox": [
+        971,
+        859,
+        102,
+        525
+      ],
+      "type": "corridor",
+      "is_public": true,
+      "note": ""
+    },
+    {
+      "bbox": [
+        573,
+        1303,
+        394,
+        82
+      ],
+      "type": "corridor",
+      "is_public": true,
+      "note": ""
+    },
+    {
+      "bbox": [
+        561,
+        1491,
+        377,
+        180
+      ],
+      "type": "corridor",
+      "is_public": true,
+      "note": ""
+    },
+    {
+      "bbox": [
+        827,
+        1387,
+        254,
+        100
+      ],
+      "type": "corridor",
+      "is_public": true,
+      "note": ""
+    },
+    {
+      "bbox": [
+        2517,
+        541,
+        284,
+        162
+      ],
+      "type": "corridor",
+      "is_public": true,
+      "note": ""
+    },
+    {
+      "bbox": [
+        1081,
+        620,
+        1435,
+        86
+      ],
+      "type": "corridor",
+      "is_public": true,
+      "note": ""
+    },
+    {
+      "bbox": [
+        2214,
+        714,
+        167,
+        385
+      ],
+      "type": "corridor",
+      "is_public": true,
+      "note": ""
+    },
+    {
+      "bbox": [
+        2379,
+        858,
+        138,
+        243
+      ],
+      "type": "corridor",
+      "is_public": true,
+      "note": ""
+    },
+    {
+      "bbox": [
+        2249,
+        1107,
+        179,
+        385
+      ],
+      "type": "corridor",
+      "is_public": true,
+      "note": ""
+    },
+    {
+      "bbox": [
+        942,
+        1506,
+        1563,
+        81
+      ],
+      "type": "corridor",
+      "is_public": true,
+      "note": ""
+    },
+    {
+      "bbox": [
+        1101,
+        1594,
+        414,
+        255
+      ],
+      "type": "corridor",
+      "is_public": true,
+      "note": ""
+    },
+    {
+      "bbox": [
+        942,
+        1586,
+        155,
+        74
+      ],
+      "type": "corridor",
+      "is_public": true,
+      "note": ""
+    },
+    {
+      "bbox": [
+        2386,
+        718,
+        132,
+        119
+      ],
+      "type": "private",
+      "is_public": false,
+      "note": ""
+    }
+  ]
+}

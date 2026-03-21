@@ -32,12 +32,29 @@ from preprocessing import load_and_binarize
 from wall_detection import detect_walls, close_wall_gaps
 from segmentation import segment_rooms
 from ocr_classify import PUBLIC_TYPES, classify_rooms, ocr_extract, match_keywords
+from overlap import resolve_overlaps
 
 
-def load_ground_truth(gt_path: str) -> list[dict]:
-    """Load ground truth annotations from JSON file."""
+def load_ground_truth(gt_path: str, img_w: int = 0, img_h: int = 0) -> list[dict]:
+    """Load ground truth annotations from JSON file.
+
+    自動執行重疊解衝突（公區優先）。
+    """
     with open(gt_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+
+    # 支援新格式（含 metadata）和舊格式（純列表）
+    if isinstance(data, dict):
+        annotations = data.get("annotations", [])
+    else:
+        annotations = data
+
+    # 重疊解衝突
+    result = resolve_overlaps(annotations, img_w=img_w, img_h=img_h)
+    if result["stats"]["dropped_count"] > 0:
+        print(f"  [overlap] 解衝突: 丟棄 {result['stats']['dropped_count']} 個被公區覆蓋的私區")
+
+    return result["resolved"]
 
 
 def bbox_iou(bbox_a: list, bbox_b: list) -> float:
@@ -87,9 +104,9 @@ def match_rooms_to_gt(rooms: list[dict], gt_entries: list[dict], iou_threshold: 
     return matches
 
 
-def evaluate(rooms: list[dict], gt_path: str) -> dict:
+def evaluate(rooms: list[dict], gt_path: str, img_w: int = 0, img_h: int = 0) -> dict:
     """Run evaluation and return metrics dict."""
-    gt_entries = load_ground_truth(gt_path)
+    gt_entries = load_ground_truth(gt_path, img_w=img_w, img_h=img_h)
 
     matches = match_rooms_to_gt(rooms, gt_entries)
 
@@ -149,7 +166,7 @@ def run_evaluation(image_path: str, gt_path: str, use_ocr: bool = False):
     classify_rooms(rooms, bounds, h, w, matched_labels)
 
     # Evaluate
-    metrics = evaluate(rooms, gt_path)
+    metrics = evaluate(rooms, gt_path, img_w=w, img_h=h)
     return metrics
 
 
